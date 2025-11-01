@@ -80,42 +80,48 @@ export default function Home() {
 
 
 const handleUploadVideo = async () => {
-   setLoading(false)
   let fileToUpload: File | null = null
-
-  // If user uploaded a file
-  if (video.file) {
-    fileToUpload = video.file
-  } 
-  // If user recorded a video
-  else if (recordedBlob) {
-    fileToUpload = new File(
-      [recordedBlob], 
-      'screen-recording.webm', 
-      { type: recordedBlob.type, lastModified: Date.now() }
-    )
-  }
+  if (video.file) fileToUpload = video.file
+  else if (recordedBlob)
+    fileToUpload = new File([recordedBlob], "screen-recording.webm", {
+      type: recordedBlob.type,
+      lastModified: Date.now(),
+    })
 
   if (!fileToUpload) {
     alert("No video selected!")
     return
   }
 
-  const formData = new FormData()
-  formData.append('video', fileToUpload)
-
   try {
-     setLoading(true)
-    const res = await uploadVideoAction(formData)
-    console.log("Uploaded to Cloudinary:", res)
+    // 1️⃣ Get Cloudinary signature from server
+    const sigRes = await fetch("/api/cloudinary-signature")
+    const { timestamp, signature, apiKey, cloudName } = await sigRes.json()
+
+    // 2️⃣ Prepare form data
+    const formData = new FormData()
+    formData.append("file", fileToUpload)
+    formData.append("api_key", apiKey)
+    formData.append("timestamp", timestamp)
+    formData.append("signature", signature)
+    formData.append("folder", "video-cam")
+    formData.append("resource_type", "video")
+
+    // 3️⃣ Upload directly to Cloudinary (no Next.js body limit)
+    const uploadRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/video/upload`,
+      { method: "POST", body: formData }
+    )
+
+    const data = await uploadRes.json()
+    console.log("✅ Uploaded:", data)
     alert("Video uploaded successfully!")
   } catch (err) {
-    console.error("Upload failed:", err)
+    console.error("❌ Upload failed:", err)
     alert("Upload failed. Check console for details.")
-  } finally {
-     setLoading(false)
   }
 }
+
 
   return (
     <div className="flex sm:flex-row flex-col min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black gap-2 ">
