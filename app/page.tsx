@@ -114,10 +114,10 @@ const handleUploadVideo = async () => {
     )
 
     const data = await uploadRes.json()
-    console.log("✅ Uploaded:", data)
+    console.log("Uploaded:", data)
     alert("Video uploaded successfully!")
   } catch (err) {
-    console.error("❌ Upload failed:", err)
+    console.error("Upload failed:", err)
     alert("Upload failed. Check console for details.")
   }
 }
