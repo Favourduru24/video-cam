@@ -9,10 +9,17 @@ cloudinary.config({
 })
 
 export async function GET() {
-  const timestamp = Math.round(new Date().getTime() / 1000)
+  const timestamp = Math.round(Date.now() / 1000)
+
+  // MUST include resource_type when uploading video
+  const paramsToSign = {
+    timestamp,
+    folder: "video-cam",
+    resource_type: "video",
+  }
 
   const signature = cloudinary.utils.api_sign_request(
-    { folder: "video-cam", timestamp },
+    paramsToSign,
     process.env.CLOUDINARY_API_SECRET!
   )
 
